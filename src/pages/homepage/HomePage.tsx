@@ -50,14 +50,14 @@ const Homepage = () => {
 
   const extractJsonFromResponse = (response: string): any | null => {
     const jsonObjects: any[] = [];
-    const jsonMatches = response.match(/{.*}/s);;
-
+    const regex = /\{[^}]*\}/g;
+    const jsonMatches = response.match(regex);
+    console.log(jsonMatches);
     if (jsonMatches) {
       jsonMatches.forEach((jsonMatch) => {
         try {
-          // Fix common JSON formatting issues, like missing commas or closing brackets
           let fixedJson = jsonMatch
-            .replace(/,\s*([\]}])/g, '$1') // Remove trailing commas before closing brackets
+            .replace(/,\s*([\]}])/g, '$1')
             .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":'); // Ensure keys are quoted
 
           const parsedJson = JSON.parse(fixedJson);
@@ -74,7 +74,7 @@ const Homepage = () => {
 
   const handleMultipleBotResponses = (response: any): ChatMessage[] => {
     let messages: ChatMessage[] = [];
-    response = response.replace('`','')
+    response = response.replace('`', '');
     const jsonObjects = extractJsonFromResponse(response);
     jsonObjects.forEach((actualRes) => {
       if (actualRes.answer) {
