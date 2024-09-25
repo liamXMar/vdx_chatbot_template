@@ -1,10 +1,35 @@
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import sampleData from '../../../assets/sampleData.json';
 
 const openAIUrl = 'https://api.openai.com/v1/chat/completions';
 
+const flattenJsonArray = (jsonArray) => {
+  let res = {
+    keys: [
+      'Call_Id',
+      'Call_Outcome',
+      'Poor_Call_Reasons',
+      'Timestamp',
+      'User_Call_Rating',
+      'User_Name',
+      'User_Packet_Loss',
+      'User_Round_Trip_Time',
+    ],
+    values: [
+      jsonArray.map((obj) => {
+        return Object.values(obj).join(',');
+      }),
+    ],
+  };
+
+  return res;
+};
+
 export async function fetchOpenAIResponse(userInput: string) {
-  const prompt = '';
+  const data = JSON.stringify(flattenJsonArray(sampleData), null, 2);
+  const prompt = `Question:
+    ${userInput}
+    `;
   return await axios.post(openAIUrl, {
     headers: {
       'Content-Type': 'application/json',
@@ -19,24 +44,12 @@ export async function fetchOpenAIResponse(userInput: string) {
 }
 
 export async function fetchOLlamaAIResponse(userInput: string) {
-  const data = JSON.stringify(sampleData, null, 2);
+  const data = JSON.stringify(flattenJsonArray(sampleData), null, 2);
   const prompt = `Question:
-  ${userInput}
-  using the following data:
+  ${userInput}`;
+  const system = `using the following data:
   ${data.toString()}
   The data represents Call Quality Data objects called legs retrieved from Microsoft Teams.
-  A call has a unique ID named Call_Id, and contains multiple legs. A leg is a representation of a specific segment of a call (from a source to a destination).
-  For example, A call between UserA and UserB contains 2 legs: one frome UserA to UserB, and another one from UserB to UserA.
-  The call is considered a good call if the outcome is a success. Otherwise it's considered a Poor call and the outcome is a failure.
-  The field that stores that outcome is named Call_Outcome.
-  If the call is a poor call, the field Poor_Call_Reasons stores the reason why the call failed. For example,
-  it can be because of the Network Switch, or Dropped Streams, or High Jitter, etc.
-  In general, the field names that starts with "Call" are represting data for an entire call. The field names that starts with "User" are specific to a leg,
-  and contains infos about the source User of a leg.
-  Call_Type represents the type of the call, it can be Peer-to-Peer or Conference. Peer-to-Peer calls are calls between two users.
-  Conference calls are calls with multiple users in it.
-  Calls are made from a Microsoft Teams client (Call_Teams_Client), using a device. A device can be critical, or healthy. We're counting them in our data,
-  the fields are called Meeting_Critical_Device_Count and Meeting_Healthy_Device_Count.
   Please provide an answer and data that we can use to draw a bar chart that answers the question, only in the following format:
   {
       "answer": "Example answer", 
@@ -65,8 +78,7 @@ export async function fetchOLlamaAIResponse(userInput: string) {
           ]
       }
   }
-  the answer should only include one json that match with the format, no extra words besides the json
-  `;
+  the answer should only contain a json string that match with the format, no extra words besides the json`;
 
   const url = process.env.NEXT_PUBLIC_OLLAMA_HOST;
   if (userInput && prompt && url) {
@@ -76,6 +88,10 @@ export async function fetchOLlamaAIResponse(userInput: string) {
         model: 'llama3.1',
         prompt: prompt,
         stream: false,
+        system: system,
+        options: {
+          num_ctx: 8192
+        },
       },
       {
         headers: {
