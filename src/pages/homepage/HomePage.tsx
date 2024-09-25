@@ -50,7 +50,7 @@ const Homepage = () => {
 
   const extractJsonFromResponse = (response: string): any | null => {
     const jsonObjects: any[] = [];
-    const jsonMatches = response.match(/{[\s\S]*?}/g); // Match all objects enclosed in {}
+    const jsonMatches = response.match(/```([\s\S]*?)```/g); // Match all objects enclosed in {}
 
     if (jsonMatches) {
       jsonMatches.forEach((jsonMatch) => {
