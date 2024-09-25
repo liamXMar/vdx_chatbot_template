@@ -49,27 +49,34 @@ const Homepage = () => {
   ]);
 
   const extractJsonFromResponse = (response: string): any | null => {
-    try {
-      const jsonMatch = response.match(/{.*}/s); // 's' flag allows '.' to match newlines
+    const jsonObjects: any[] = [];
+    const jsonMatches = response.match(/{[\s\S]*?}/g); // Match all objects enclosed in {}
 
-      if (jsonMatch && jsonMatch[0]) {
-        // Parse the matched JSON string
-        const parsedJson = JSON.parse(jsonMatch[0]);
-        return parsedJson;
-      }
+    if (jsonMatches) {
+      jsonMatches.forEach((jsonMatch) => {
+        try {
+          // Fix common JSON formatting issues, like missing commas or closing brackets
+          let fixedJson = jsonMatch
+            .replace(/,\s*([\]}])/g, '$1') // Remove trailing commas before closing brackets
+            .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":'); // Ensure keys are quoted
 
-      return null;
-    } catch (error) {
-      console.error('Error parsing JSON from response:', error);
-      return null;
+          const parsedJson = JSON.parse(fixedJson);
+          console.log(parsedJson);
+          jsonObjects.push(parsedJson);
+        } catch (error) {
+          console.error('Error parsing JSON from response:', error);
+        }
+      });
     }
+
+    return jsonObjects;
   };
 
   const handleMultipleBotResponses = (response: any): ChatMessage[] => {
     let messages: ChatMessage[] = [];
 
-    const actualRes = extractJsonFromResponse(response);
-    if (actualRes) {
+    const jsonObjects = extractJsonFromResponse(response);
+    jsonObjects.forEach((actualRes) => {
       if (actualRes.answer) {
         const textMessage: ChatMessage = {
           message: actualRes.answer,
@@ -77,7 +84,6 @@ const Homepage = () => {
         };
         messages.push(textMessage);
       }
-
       if (actualRes.table) {
         const graphicMessage: ChatMessage = {
           message: '',
@@ -87,7 +93,9 @@ const Homepage = () => {
         };
         messages.push(graphicMessage);
       }
-    } else {
+    });
+
+    if (messages.length === 0) {
       messages.push({
         message: response,
         sender: Sender.Left,
@@ -97,9 +105,8 @@ const Homepage = () => {
     return messages;
   };
 
-  // Function to handle user messages
   const handleUserMessage = async (userMessage) => {
-    // Create a new user message object
+    console.log(userMessage);
     const newUserMessage = {
       message: userMessage,
       sender: Sender.Right,
@@ -114,19 +121,10 @@ const Homepage = () => {
     try {
       const aiResponse = await fetchOLlamaAIResponse(userMessage);
       console.log(aiResponse);
-      console.log(aiResponse?.data.response);
-      const newBotMessages: ChatMessage[] = handleMultipleBotResponses(
-        aiResponse?.data.response
-      );
-    //   const newBotMessage = {
-    //     message: aiResponse?.data.response,
-    //     sender: Sender.Left,
-    //   };
-    //   newBotMessages.push(newBotMessage);
-
+      const botMessages = handleMultipleBotResponses(aiResponse?.data.response);
       setChatMessages((prevChatMessages) => [
         ...prevChatMessages,
-        ...newBotMessages,
+        ...botMessages,
       ]);
       setIfBotTyping(false);
     } catch (e) {

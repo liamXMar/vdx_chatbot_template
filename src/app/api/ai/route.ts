@@ -53,7 +53,9 @@ export async function fetchOLlamaAIResponse(userInput: string) {
           }
           ]
       }
-  }`;
+  }
+  the answer should only include those json
+  `;
 
   const url = process.env.NEXT_PUBLIC_OLLAMA_HOST;
   if (userInput && prompt && url) {
