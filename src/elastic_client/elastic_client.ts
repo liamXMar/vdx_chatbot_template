@@ -1,5 +1,6 @@
 import { Client } from 'es7';
 import * as dotenv from "dotenv";
+import * as fs from 'fs';
 import { transformObject, renameFields, sortObjectKeysAlphabetically } from './utils';
 const util = require('util');
 
@@ -19,17 +20,12 @@ const fieldMappings = {
 	"event.action": "Call_Type",
 	"event.reason": "Poor_Call_Reasons",
 	"event.outcome": "Call_Outcome",
-	"labels.teams_meeting_room.count_device_critical": "Meeting_Critical_Device_Count",
-	"labels.teams_meeting_room.count_device_healthy": "Meeting_Healthy_Device_Count",
-	"labels.teams_meeting_room.count_device_total": "Meeting_Total_Device_Count",
 	"labels.teams_meeting_room.display_name": "Meeting_Room_Name",
 	"source.user.name": "User_Name",
 	"source.user.id": "User_Email",
 	"source.geo.name": "User_Location",
 	"source.vdx_audio_capture_device": "User_Audio_Device",
 	"source.vdx_bandwidth": "User_Bandwidth",
-	"source.vdx_cpu_system_usage": "User_System_Cpu_Usage",
-	"source.vdx_cpu_teams_usage": "User_Teams_Cpu_Usage",
 	"source.vdx_detected_location": "User_Remote_Or_Office",
 	"source.vdx_internet_connection_type": "User_Connetion_Type",
 	"source.vdx_jitter": "User_Jitter",
@@ -57,11 +53,11 @@ const fieldMappings = {
 client.search({
 	index: '*events_teams_cqd_legs*',
 	body: {
-		"size": 500,
+		"size": 200,
 		query: {
 			"range": {
 				"@timestamp": {
-					"gte": "now-24h",
+					"gte": "now-12h",
 					"lte": "now"
 				}
 			}
@@ -72,17 +68,12 @@ client.search({
 			"event.action",
 			"event.reason",
 			"event.outcome",
-			"labels.teams_meeting_room.count_device_critical",
-			"labels.teams_meeting_room.count_device_healthy",
-			"labels.teams_meeting_room.count_device_total",
 			"labels.teams_meeting_room.display_name",
 			"source.user.name",
 			"source.user.id",
 			"source.geo.name",
 			"source.vdx_audio_capture_device",
 			"source.vdx_bandwidth",
-			"source.vdx_cpu_system_usage",
-			"source.vdx_cpu_teams_usage",
 			"source.vdx_detected_location",
 			"source.vdx_internet_connection_type",
 			"source.vdx_jitter",
@@ -116,5 +107,21 @@ client.search({
 		var res = result.body.hits.hits.map(h => sortObjectKeysAlphabetically(renameFields(transformObject(h.fields), fieldMappings)));
 		console.log(util.inspect(res, fieldMappings), { showHidden: false, depth: null, colors: true });
 		//console.log(util.inspect(result.body.hits, { showHidden: false, depth: null, colors: true }));
+
+		
+        // Convert the object to a JSON string
+        const jsonData = JSON.stringify(res, null, 2); // 'null' and '2' are for pretty printing the JSON
+
+        // Path where the JSON file will be stored
+        const filePath = './data.json';
+
+        // Write the JSON data to the file
+        fs.writeFile(filePath, jsonData, 'utf8', (err) => {
+			if (err) {
+				console.error('Error writing to file', err);
+			} else {
+				console.log(`Data successfully written to ${filePath}`);
+			}
+        });
 	}
 });
