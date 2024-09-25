@@ -1,4 +1,4 @@
-import { fetchOpenAIResponse } from '@/app/api/ai/route';
+import { fetchOLlamaAIResponse, fetchOpenAIResponse } from '@/app/api/ai/route';
 import {
   MainContainer,
   ChatContainer,
@@ -10,10 +10,25 @@ import {
   TypingIndicator,
 } from '@chatscope/chat-ui-kit-react';
 import React, { useState } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Bar, Chart } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 enum Sender {
   Left = 'left',
@@ -22,6 +37,8 @@ enum Sender {
 type ChatMessage = {
   message: string;
   sender: Sender;
+  isGraphic?: boolean;
+  graphicData?: any;
 };
 
 const Homepage = () => {
@@ -33,6 +50,55 @@ const Homepage = () => {
     },
   ]);
 
+  const extractJsonFromResponse = (response: string): any | null => {
+    try {
+      const jsonMatch = response.match(/{.*}/s); // 's' flag allows '.' to match newlines
+
+      if (jsonMatch && jsonMatch[0]) {
+        // Parse the matched JSON string
+        const parsedJson = JSON.parse(jsonMatch[0]);
+        return parsedJson;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error parsing JSON from response:', error);
+      return null;
+    }
+  };
+
+  const handleMultipleBotResponses = (response: any): ChatMessage[] => {
+    let messages: ChatMessage[] = [];
+
+    const actualRes = extractJsonFromResponse(response);
+    if (actualRes) {
+      if (actualRes.answer) {
+        const textMessage: ChatMessage = {
+          message: actualRes.answer,
+          sender: Sender.Left,
+        };
+        messages.push(textMessage);
+      }
+
+      if (actualRes.table) {
+        const graphicMessage: ChatMessage = {
+          message: '',
+          sender: Sender.Left,
+          isGraphic: true,
+          graphicData: actualRes.table,
+        };
+        messages.push(graphicMessage);
+      }
+    } else {
+      messages.push({
+        message: response,
+        sender: Sender.Left,
+      });
+    }
+
+    return messages;
+  };
+
   // Function to handle user messages
   const handleUserMessage = async (userMessage) => {
     // Create a new user message object
@@ -40,46 +106,52 @@ const Homepage = () => {
       message: userMessage,
       sender: Sender.Right,
     };
-    let updatedChatMessages = [...chatMessages, newUserMessage];
-    setChatMessages(updatedChatMessages);
+
+    setChatMessages((prevChatMessages) => [
+      ...prevChatMessages,
+      newUserMessage,
+    ]);
 
     setIfBotTyping(true);
-    const aiResponse = (await fetchOpenAIResponse(userMessage)).data;
-    console.log(aiResponse);
+    try {
+      const aiResponse = await fetchOLlamaAIResponse(userMessage);
+      console.log(aiResponse);
+      console.log(aiResponse?.data.response);
+      const newBotMessages: ChatMessage[] = handleMultipleBotResponses(
+        aiResponse?.data.response
+      );
+      const newBotMessage = {
+        message: aiResponse?.data.response,
+        sender: Sender.Left,
+      };
+      newBotMessages.push(newBotMessage);
 
-    const newBotMessage = {
-      message: aiResponse,
-      sender: Sender.Left,
-    };
-
-    updatedChatMessages = [...chatMessages, newBotMessage];
-    setChatMessages(updatedChatMessages);
+      setChatMessages((prevChatMessages) => [
+        ...prevChatMessages,
+        ...newBotMessages,
+      ]);
+      setIfBotTyping(false);
+    } catch (e) {
+      console.log(e);
+      setIfBotTyping(false);
+    }
   };
 
-  const labels = ['jan', 'feb', 'mar', 3, 4, 5, 6, 7];
   const data = {
-    labels: labels,
+    labels: ['Dallas Meeting Room', 'Buffalo Meeting Room', 'Paris Executive'],
     datasets: [
       {
-        label: 'My First Dataset',
-        data: [65, 59, 80, 81, 56, 55, 40],
+        label: 'Meeting Device Count',
+        data: [3, 3, 3],
         backgroundColor: [
-          'rgba(255, 99, 132, 0.2)',
-          'rgba(255, 159, 64, 0.2)',
-          'rgba(255, 205, 86, 0.2)',
-          'rgba(75, 192, 192, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(153, 102, 255, 0.2)',
-          'rgba(201, 203, 207, 0.2)',
+          'rgba(255, 99, 132, 0.8)',
+          'rgba(255, 159, 64, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
         ],
         borderColor: [
           'rgb(255, 99, 132)',
           'rgb(255, 159, 64)',
-          'rgb(255, 205, 86)',
           'rgb(75, 192, 192)',
-          'rgb(54, 162, 235)',
-          'rgb(153, 102, 255)',
-          'rgb(201, 203, 207)',
         ],
         borderWidth: 1,
       },
@@ -92,20 +164,18 @@ const Homepage = () => {
         style={{
           position: 'relative',
           height: '80vh',
-          width: '700px',
-          backgroundColor: 'black',
+          width: '85%',
+          margin: 'auto',
         }}
       >
-        {/* All components are wrapped in the MainContainer */}
+        <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>
+          Chat with VDX Bot
+        </h3>
         <MainContainer>
           {/* All chat logic will be contained in the ChatContainer */}
           <ChatContainer>
             {/* Shows all our messages */}
             <MessageList>
-              {/* <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>
-                Chat Messages
-              </h3> */}
-              {/* <Bar data={data} />; */}
               <Message
                 model={{
                   message: '',
@@ -118,6 +188,24 @@ const Homepage = () => {
                 </Message.CustomContent>
               </Message>
               {chatMessages.map((message, i) => {
+                if (message.isGraphic && message.graphicData) {
+                  return (
+                    <Message
+                      model={{
+                        message: '',
+                        direction:
+                          message.sender === Sender.Left
+                            ? 'incoming'
+                            : 'outgoing',
+                        position: 'single',
+                      }}
+                    >
+                      <Message.CustomContent>
+                        <Bar data={message.graphicData} />
+                      </Message.CustomContent>
+                    </Message>
+                  );
+                }
                 return (
                   <Message
                     key={i}
@@ -141,11 +229,13 @@ const Homepage = () => {
           </ChatContainer>
         </MainContainer>
       </div>
-      {ifBotTyping ? <TypingIndicator content="VDX Bot is typing" /> : <></>}
-      <MessageInput
-        placeholder="Type Message here"
-        onSend={handleUserMessage}
-      />
+      <div style={{ marginTop: '50px' }}>
+        {ifBotTyping ? <TypingIndicator content="VDX Bot is typing" /> : <></>}
+        <MessageInput
+          placeholder="Type Message here"
+          onSend={handleUserMessage}
+        />
+      </div>
     </>
   );
 };
