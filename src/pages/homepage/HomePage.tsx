@@ -51,6 +51,10 @@ const Homepage = () => {
   const extractJsonFromResponse = (response: string): any | null => {
     const jsonObjects: any[] = [];
     console.log(response);
+    // const jsonMatches = response.match(/`json([\s\S]*?)`/g);
+    // console.log(jsonMatches);
+    // jsonMatches?.forEach((js) => {
+    // });
     if (response) {
         try {
           const parsedJson = JSON.parse(response);

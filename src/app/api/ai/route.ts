@@ -20,12 +20,11 @@ export async function fetchOpenAIResponse(userInput: string) {
 
 export async function fetchOLlamaAIResponse(userInput: string) {
   const data = JSON.stringify(sampleData, null, 2);
-  const prompt = `I want you to answer the following question: 
+  const prompt = `Question:
   ${userInput}
   using the following data:
   ${data.toString()}
-  This data represents Call Quality Data objects called legs retrieved from Microsoft Teams.
-  I want to monitor Microsoft Teams data, and I want to you to help me to do that.
+  The data represents Call Quality Data objects called legs retrieved from Microsoft Teams.
   A call has a unique ID named Call_Id, and contains multiple legs. A leg is a representation of a specific segment of a call (from a source to a destination).
   For example, A call between UserA and UserB contains 2 legs: one frome UserA to UserB, and another one from UserB to UserA.
   The call is considered a good call if the outcome is a success. Otherwise it's considered a Poor call and the outcome is a failure.
@@ -38,9 +37,7 @@ export async function fetchOLlamaAIResponse(userInput: string) {
   Conference calls are calls with multiple users in it.
   Calls are made from a Microsoft Teams client (Call_Teams_Client), using a device. A device can be critical, or healthy. We're counting them in our data,
   the fields are called Meeting_Critical_Device_Count and Meeting_Healthy_Device_Count.
-  I want the answer in the following format:
-  {"answer": "Example answer"}
-  I also want you to provide an answer and to return data that we can use to draw a bar chart that answers the question, only in the following format:
+  Please provide an answer and data that we can use to draw a bar chart that answers the question, only in the following format:
   {
       "answer": "Example answer", 
       "table": {
