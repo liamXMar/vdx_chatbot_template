@@ -1,5 +1,6 @@
 import { Client } from 'es7';
 import * as dotenv from "dotenv";
+import { transformObject, renameFields, sortObjectKeysAlphabetically } from './utils';
 const util = require('util');
 
 dotenv.config();
@@ -11,32 +12,6 @@ const client = new Client({
 		password: process.env.ES_PASSWORD || ''
 	}
 });
-
-
-function transformObject(input: { [key: string]: any[] }): { [key: string]: any } {
-	const result: { [key: string]: any } = {};
-
-	for (const key in input) {
-		if (Array.isArray(input[key]) && input[key].length > 0) {
-			result[key] = input[key][0];
-		} else {
-			result[key] = input[key];
-		}
-	}
-
-	return result;
-}
-
-function renameFields(data: { [key: string]: any }, fieldMappings: { [oldKey: string]: string }): { [key: string]: any } {
-	const result: { [key: string]: any } = {};
-
-	for (const key in data) {
-		const newKey = fieldMappings[key] || key; // Use the new name if it exists, otherwise keep the original
-		result[newKey] = data[key];
-	}
-
-	return result;
-}
 
 const fieldMappings = {
 	"@timestamp": "Timestamp",
@@ -138,8 +113,8 @@ client.search({
 			console.log(util.inspect(transformObject(h.fields), { showHidden: false, depth: null, colors: true }))
 		});*/
 
-		var res = result.body.hits.hits.map(h => transformObject(h.fields));
-		console.log(util.inspect(res), { showHidden: false, depth: null, colors: true });
+		var res = result.body.hits.hits.map(h => sortObjectKeysAlphabetically(renameFields(transformObject(h.fields), fieldMappings)));
+		console.log(util.inspect(res, fieldMappings), { showHidden: false, depth: null, colors: true });
 		//console.log(util.inspect(result.body.hits, { showHidden: false, depth: null, colors: true }));
 	}
 });
