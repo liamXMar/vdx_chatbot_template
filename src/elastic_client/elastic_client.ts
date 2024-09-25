@@ -57,7 +57,7 @@ client.search({
 		query: {
 			"range": {
 				"@timestamp": {
-					"gte": "now-12h",
+					"gte": "now-6h",
 					"lte": "now"
 				}
 			}
@@ -65,36 +65,13 @@ client.search({
 		"fields": [
 			"@timestamp",
 			"labels.call_id",
-			"event.action",
 			"event.reason",
 			"event.outcome",
-			"labels.teams_meeting_room.display_name",
 			"source.user.name",
-			"source.user.id",
-			"source.geo.name",
-			"source.vdx_audio_capture_device",
-			"source.vdx_bandwidth",
-			"source.vdx_detected_location",
-			"source.vdx_internet_connection_type",
-			"source.vdx_jitter",
-			"source.vdx_memory_system_usage",
-			"source.vdx_memory_teams_usage",
 			"source.vdx_packet_loss",
 			"source.vdx_rtt",
 			"source.vdx_teamsclient",
 			"source.vdx_user_rating",
-			"vdx_call_metrics.averagebandwidth",
-			"vdx_call_metrics.averagejitter",
-			"vdx_call_metrics.averagepacketloss",
-			"vdx_call_metrics.averagerating",
-			"vdx_call_metrics.averagesystemcpuusage",
-			"vdx_call_metrics.averageteamscpuusage",
-			"vdx_call_metrics.connnectiontypes",
-			"vdx_call_metrics.networkswitching",
-			"vdx_call_metrics.teams_clients",
-			"vdx_call_metrics.transporttypes",
-			"vdx_call_metrics.wifisignalstrengths",
-			"vdx_call_metrics.work_location"
 		]
 	}
 }, (err, result) => {
