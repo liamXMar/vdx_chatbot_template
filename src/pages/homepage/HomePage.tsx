@@ -50,7 +50,7 @@ const Homepage = () => {
 
   const extractJsonFromResponse = (response: string): any | null => {
     const jsonObjects: any[] = [];
-    const jsonMatches = response.match(/```([\s\S]*?)```/g); // Match all objects enclosed in {}
+    const jsonMatches = response.match(/{.*}/s);;
 
     if (jsonMatches) {
       jsonMatches.forEach((jsonMatch) => {
@@ -74,7 +74,7 @@ const Homepage = () => {
 
   const handleMultipleBotResponses = (response: any): ChatMessage[] => {
     let messages: ChatMessage[] = [];
-
+    response = response.replace('`','')
     const jsonObjects = extractJsonFromResponse(response);
     jsonObjects.forEach((actualRes) => {
       if (actualRes.answer) {
