@@ -50,23 +50,15 @@ const Homepage = () => {
 
   const extractJsonFromResponse = (response: string): any | null => {
     const jsonObjects: any[] = [];
-    const regex = /\{[^}]*\}/g;
-    const jsonMatches = response.match(regex);
-    console.log(jsonMatches);
-    if (jsonMatches) {
-      jsonMatches.forEach((jsonMatch) => {
+    console.log(response);
+    if (response) {
         try {
-          let fixedJson = jsonMatch
-            .replace(/,\s*([\]}])/g, '$1')
-            .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":'); // Ensure keys are quoted
-
-          const parsedJson = JSON.parse(fixedJson);
+          const parsedJson = JSON.parse(response);
           console.log(parsedJson);
           jsonObjects.push(parsedJson);
         } catch (error) {
           console.error('Error parsing JSON from response:', error);
         }
-      });
     }
 
     return jsonObjects;
@@ -75,6 +67,7 @@ const Homepage = () => {
   const handleMultipleBotResponses = (response: any): ChatMessage[] => {
     let messages: ChatMessage[] = [];
     response = response.replace('`', '');
+    console.log(response);
     const jsonObjects = extractJsonFromResponse(response);
     jsonObjects.forEach((actualRes) => {
       if (actualRes.answer) {
@@ -195,6 +188,7 @@ const Homepage = () => {
                             : 'outgoing',
                         position: 'single',
                       }}
+                      key={i}
                     >
                       <Message.CustomContent>
                         <Bar data={message.graphicData} />

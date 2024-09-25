@@ -24,9 +24,7 @@ export async function fetchOLlamaAIResponse(userInput: string) {
   ${userInput}
   with the following data:
   ${data.toString()}
-  in the following format:
-  {"answer": "Example answer"}
-  and if possible, please also draw a bar chart to answer the question in the following json format:
+  with an answer and data to draw a bar chart to answer the question, only in the following format:
   {
       "answer": "Example answer", 
       "table": {
@@ -54,7 +52,7 @@ export async function fetchOLlamaAIResponse(userInput: string) {
           ]
       }
   }
-  the answer should only include those json
+  the answer should only include one json that match with the format, no extra words besides the json
   `;
 
   const url = process.env.NEXT_PUBLIC_OLLAMA_HOST;
