@@ -1,12 +1,10 @@
-import { fetchOLlamaAIResponse, fetchOpenAIResponse } from '@/app/api/ai/route';
+import { fetchOLlamaAIResponse } from '@/app/api/ai/route';
 import {
   MainContainer,
   ChatContainer,
   MessageList,
   Message,
   MessageInput,
-  MessageCustomContent,
-  MessageHtmlContent,
   TypingIndicator,
 } from '@chatscope/chat-ui-kit-react';
 import React, { useState } from 'react';
@@ -120,11 +118,11 @@ const Homepage = () => {
       const newBotMessages: ChatMessage[] = handleMultipleBotResponses(
         aiResponse?.data.response
       );
-      const newBotMessage = {
-        message: aiResponse?.data.response,
-        sender: Sender.Left,
-      };
-      newBotMessages.push(newBotMessage);
+    //   const newBotMessage = {
+    //     message: aiResponse?.data.response,
+    //     sender: Sender.Left,
+    //   };
+    //   newBotMessages.push(newBotMessage);
 
       setChatMessages((prevChatMessages) => [
         ...prevChatMessages,
@@ -137,26 +135,26 @@ const Homepage = () => {
     }
   };
 
-  const data = {
-    labels: ['Dallas Meeting Room', 'Buffalo Meeting Room', 'Paris Executive'],
-    datasets: [
-      {
-        label: 'Meeting Device Count',
-        data: [3, 3, 3],
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.8)',
-          'rgba(255, 159, 64, 0.8)',
-          'rgba(75, 192, 192, 0.8)',
-        ],
-        borderColor: [
-          'rgb(255, 99, 132)',
-          'rgb(255, 159, 64)',
-          'rgb(75, 192, 192)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
+  //   const data = {
+  //     labels: ['Dallas Meeting Room', 'Buffalo Meeting Room', 'Paris Executive'],
+  //     datasets: [
+  //       {
+  //         label: 'Example Chart Display',
+  //         data: [3, 2, 3],
+  //         backgroundColor: [
+  //           'rgba(255, 99, 132, 0.8)',
+  //           'rgba(255, 159, 64, 0.8)',
+  //           'rgba(75, 192, 192, 0.8)',
+  //         ],
+  //         borderColor: [
+  //           'rgb(255, 99, 132)',
+  //           'rgb(255, 159, 64)',
+  //           'rgb(75, 192, 192)',
+  //         ],
+  //         borderWidth: 1,
+  //       },
+  //     ],
+  //   };
   return (
     <>
       {/* A container for the chat window */}
@@ -176,7 +174,7 @@ const Homepage = () => {
           <ChatContainer>
             {/* Shows all our messages */}
             <MessageList>
-              <Message
+              {/* <Message
                 model={{
                   message: '',
                   direction: 'outgoing',
@@ -186,7 +184,7 @@ const Homepage = () => {
                 <Message.CustomContent>
                   <Bar data={data} />
                 </Message.CustomContent>
-              </Message>
+              </Message> */}
               {chatMessages.map((message, i) => {
                 if (message.isGraphic && message.graphicData) {
                   return (
@@ -205,25 +203,26 @@ const Homepage = () => {
                       </Message.CustomContent>
                     </Message>
                   );
-                }
-                return (
-                  <Message
-                    key={i}
-                    model={{
-                      message: message.message,
-                      direction:
+                } else {
+                  return (
+                    <Message
+                      key={i}
+                      model={{
+                        message: message.message,
+                        direction:
+                          message.sender === Sender.Left
+                            ? 'incoming'
+                            : 'outgoing',
+                        position: 'single',
+                      }}
+                      style={
                         message.sender === Sender.Left
-                          ? 'incoming'
-                          : 'outgoing',
-                      position: 'single',
-                    }}
-                    style={
-                      message.sender === Sender.Left
-                        ? { textAlign: 'left' }
-                        : {}
-                    }
-                  />
-                );
+                          ? { textAlign: 'left' }
+                          : {}
+                      }
+                    />
+                  );
+                }
               })}
             </MessageList>
           </ChatContainer>
