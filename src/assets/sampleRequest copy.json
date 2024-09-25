@@ -1,0 +1,7 @@
+{
+  "keys": ["Call_Id", "Call_Outcome", "Call_Type"],
+  "values": [
+    "731e785a-e0b9-4690-ae75-f4b9904873cb,success,Peer-to-peer",
+    "731e785a-e0b9-4690-ae75-f4b99sdfe3cb,success,Peer-to-peer"
+  ]
+}

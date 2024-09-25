@@ -1,4 +1,4 @@
-import { fetchOLlamaAIResponse } from '@/app/api/ai/route';
+import { fetchOLlamaAIResponse, initOLlamaAI } from '@/app/api/ai/route';
 import {
   MainContainer,
   ChatContainer,
@@ -7,7 +7,7 @@ import {
   MessageInput,
   TypingIndicator,
 } from '@chatscope/chat-ui-kit-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -48,6 +48,15 @@ const Homepage = () => {
     },
   ]);
 
+  const initAI = async () => {
+    await initOLlamaAI();
+  };
+
+  // Call the initAI function during initialization (component mount)
+  useEffect(() => {
+    initAI();
+  }, [initAI]);
+
   const extractJsonFromResponse = (response: string): any | null => {
     const jsonObjects: any[] = [];
     console.log(response);
@@ -56,18 +65,17 @@ const Homepage = () => {
     // jsonMatches?.forEach((js) => {
     // });
     if (response) {
-        try {
-          const parsedJson = JSON.parse(response);
-          console.log(parsedJson);
-          jsonObjects.push(parsedJson);
-        } catch (error) {
-          console.error('Error parsing JSON from response:', error);
-        }
+      try {
+        const parsedJson = JSON.parse(response);
+        console.log(parsedJson);
+        jsonObjects.push(parsedJson);
+      } catch (error) {
+        console.error('Error parsing JSON from response:', error);
+      }
     }
 
     return jsonObjects;
   };
-
   const handleMultipleBotResponses = (response: any): ChatMessage[] => {
     let messages: ChatMessage[] = [];
     response = response.replace('`', '');
@@ -130,26 +138,6 @@ const Homepage = () => {
     }
   };
 
-  //   const data = {
-  //     labels: ['Dallas Meeting Room', 'Buffalo Meeting Room', 'Paris Executive'],
-  //     datasets: [
-  //       {
-  //         label: 'Example Chart Display',
-  //         data: [3, 2, 3],
-  //         backgroundColor: [
-  //           'rgba(255, 99, 132, 0.8)',
-  //           'rgba(255, 159, 64, 0.8)',
-  //           'rgba(75, 192, 192, 0.8)',
-  //         ],
-  //         borderColor: [
-  //           'rgb(255, 99, 132)',
-  //           'rgb(255, 159, 64)',
-  //           'rgb(75, 192, 192)',
-  //         ],
-  //         borderWidth: 1,
-  //       },
-  //     ],
-  //   };
   return (
     <>
       {/* A container for the chat window */}
@@ -165,21 +153,8 @@ const Homepage = () => {
           Chat with VDX Bot
         </h3>
         <MainContainer>
-          {/* All chat logic will be contained in the ChatContainer */}
           <ChatContainer>
-            {/* Shows all our messages */}
             <MessageList>
-              {/* <Message
-                model={{
-                  message: '',
-                  direction: 'outgoing',
-                  position: 'single',
-                }}
-              >
-                <Message.CustomContent>
-                  <Bar data={data} />
-                </Message.CustomContent>
-              </Message> */}
               {chatMessages.map((message, i) => {
                 if (message.isGraphic && message.graphicData) {
                   return (
@@ -236,3 +211,6 @@ const Homepage = () => {
 };
 
 export default Homepage;
+function useRef<T>(arg0: null) {
+  throw new Error('Function not implemented.');
+}

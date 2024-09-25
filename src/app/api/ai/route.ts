@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import sampleData from '../../../assets/sampleData.json';
 
 const openAIUrl = 'https://api.openai.com/v1/chat/completions';
@@ -18,13 +18,18 @@ export async function fetchOpenAIResponse(userInput: string) {
   });
 }
 
-export async function fetchOLlamaAIResponse(userInput: string) {
-  const data = JSON.stringify(sampleData, null, 2);
-  const prompt = `Question:
-  ${userInput}
-  using the following data:
+const flattenJsonArray = (jsonArray) => {
+  return jsonArray.map((obj) => {
+    return Object.values(obj).join(',');
+  });
+};
+
+export async function initOLlamaAI() {
+  const data = JSON.stringify(flattenJsonArray(sampleData), null, 2);
+  const prompt = `using the following data:
   ${data.toString()}
   The data represents Call Quality Data objects called legs retrieved from Microsoft Teams.
+  Each records has values that matches with the following key values: Call_Id,Call_Outcome,Call_Type,Meeting_Critical_Device_Count,Meeting_Healthy_Device_Count,Meeting_Room_Name,Meeting_Total_Device_Count,Poor_Call_Reasons,Timestamp,User_Bandwidth,User_Call_Rating,User_Email,User_Jitter,User_Name,User_Packet_Loss,User_Round_Trip_Time,User_System_Cpu_Usage,User_System_Memory_Usage,User_Teams_Cpu_Usage,User_Teams_Memory_Usage
   A call has a unique ID named Call_Id, and contains multiple legs. A leg is a representation of a specific segment of a call (from a source to a destination).
   For example, A call between UserA and UserB contains 2 legs: one frome UserA to UserB, and another one from UserB to UserA.
   The call is considered a good call if the outcome is a success. Otherwise it's considered a Poor call and the outcome is a failure.
@@ -37,7 +42,7 @@ export async function fetchOLlamaAIResponse(userInput: string) {
   Conference calls are calls with multiple users in it.
   Calls are made from a Microsoft Teams client (Call_Teams_Client), using a device. A device can be critical, or healthy. We're counting them in our data,
   the fields are called Meeting_Critical_Device_Count and Meeting_Healthy_Device_Count.
-  Please provide an answer and data that we can use to draw a bar chart that answers the question, only in the following format:
+  I will start asking questions, Please provide an answer and data that we can use to draw a bar chart that answers the question, only in the following format:
   {
       "answer": "Example answer", 
       "table": {
@@ -66,6 +71,30 @@ export async function fetchOLlamaAIResponse(userInput: string) {
       }
   }
   the answer should only include one json that match with the format, no extra words besides the json
+  `;
+  const url = process.env.NEXT_PUBLIC_OLLAMA_HOST;
+  if (prompt && url) {
+    return await axios.post(
+      url,
+      {
+        model: 'llama3.1',
+        prompt: prompt,
+        stream: false,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  } else {
+    return null;
+  }
+}
+
+export async function fetchOLlamaAIResponse(userInput: string) {
+  const prompt = `Question:
+  ${userInput}
   `;
 
   const url = process.env.NEXT_PUBLIC_OLLAMA_HOST;
