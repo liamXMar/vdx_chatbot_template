@@ -54,26 +54,35 @@ client.search({
 	index: '*events_teams_cqd_legs*',
 	body: {
 		"size": 200,
-		query: {
-			"range": {
-				"@timestamp": {
-					"gte": "now-6h",
-					"lte": "now"
-				}
+		"query": {
+			"bool": {
+				"must": [
+					{
+						"term": { "agent.name": "cqd demo" }
+					},
+					{
+						"range": {
+							"@timestamp": {
+								"gte": "now-72h",
+								"lte": "now"
+							}
+						}
+					}
+				]
 			}
 		},
 		"fields": [
 			"@timestamp",
 			"labels.call_id",
 			"event.reason",
-			"event.outcome",
+			"labels.status",
 			"source.user.name",
 			"source.vdx_packet_loss",
 			"source.vdx_rtt",
 			"source.vdx_teamsclient",
-			"source.vdx_user_rating",
+			"source.vdx_user_rating"
 		]
-	}
+	}	
 }, (err, result) => {
 	if (err) console.log(err)
 	else {
@@ -82,8 +91,8 @@ client.search({
 		});*/
 
 		var res = result.body.hits.hits.map(h => sortObjectKeysAlphabetically(renameFields(transformObject(h.fields), fieldMappings)));
-		console.log(util.inspect(res, fieldMappings), { showHidden: false, depth: null, colors: true });
-		//console.log(util.inspect(result.body.hits, { showHidden: false, depth: null, colors: true }));
+		//console.log(util.inspect(res, fieldMappings), { showHidden: false, depth: null, colors: true });
+		console.log(util.inspect(result.body.hits.hits, { showHidden: false, depth: null, colors: true }));
 
 		
         // Convert the object to a JSON string
