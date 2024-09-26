@@ -1,4 +1,4 @@
-import { fetchOLlamaAIResponse } from '@/app/api/ai/route';
+import { fetchOLlamaAIResponse, fetchOpenAIResponse } from '@/app/api/ai/route';
 import {
   MainContainer,
   ChatContainer,
@@ -116,7 +116,7 @@ const Homepage = () => {
 
     setIfBotTyping(true);
     try {
-      const aiResponse = await fetchOLlamaAIResponse(userMessage);
+      const aiResponse = await fetchOpenAIResponse(userMessage);
       console.log(aiResponse);
       const botMessages = handleMultipleBotResponses(aiResponse?.data.response);
       setChatMessages((prevChatMessages) => [
