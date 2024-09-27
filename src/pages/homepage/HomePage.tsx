@@ -1,4 +1,4 @@
-import { fetchOLlamaAIResponse } from '@/app/api/ai/route';
+import { fetchOLlamaAIResponse, fetchPandasAIResponse } from '@/app/api/ai/route';
 import {
   MainContainer,
   ChatContainer,
@@ -49,60 +49,53 @@ const Homepage = () => {
   ]);
 
   const extractJsonFromResponse = (response: string): any | null => {
-    const jsonObjects: any[] = [];
     console.log(response);
-    // const jsonMatches = response.match(/`json([\s\S]*?)`/g);
-    // console.log(jsonMatches);
-    // jsonMatches?.forEach((js) => {
-    // });
-    if (response) {
-        try {
-          const parsedJson = JSON.parse(response);
-          console.log(parsedJson);
-          jsonObjects.push(parsedJson);
-        } catch (error) {
-          console.error('Error parsing JSON from response:', error);
-        }
+    let cleanString = response.trim();
+
+    // Use a regex to find the JSON block inside the string
+    let jsonMatch = cleanString.match(/```(?:json)?([\s\S]*?)```/);
+
+    if (jsonMatch && jsonMatch[1]) {
+        cleanString = jsonMatch[1].trim(); // Extract the JSON part and trim it
+    } 
+    let jsonMatches = response.replace(/```/g, '').trim();
+    console.log(jsonMatches);
+    // Check if the input contains code block markers (```), and remove them if present
+    if (cleanString.startsWith("```") && cleanString.endsWith("```")) {
+        cleanString = cleanString.replace(/```(?:json)?/g, '').trim(); // Remove any ``` or ```json
+    }
+    if (cleanString[cleanString.length - 1] !== '}') {
+      cleanString += '}';
     }
 
-    return jsonObjects;
-  };
-
-  const handleMultipleBotResponses = (response: any): ChatMessage[] => {
-    let messages: ChatMessage[] = [];
-    response = response.replace('`', '');
-    console.log(response);
-    const jsonObjects = extractJsonFromResponse(response);
-    jsonObjects.forEach((actualRes) => {
-      if (actualRes.answer) {
-        const textMessage: ChatMessage = {
-          message: actualRes.answer,
-          sender: Sender.Left,
-        };
-        messages.push(textMessage);
+    if (jsonMatches) {
+      try {
+        return JSON.parse(cleanString);
+      } catch (error) {
+        console.error('Error parsing JSON from response:', error);
       }
-      if (actualRes.table) {
-        const graphicMessage: ChatMessage = {
-          message: '',
-          sender: Sender.Left,
-          isGraphic: true,
-          graphicData: actualRes.table,
-        };
-        messages.push(graphicMessage);
-      }
-    });
-
-    if (messages.length === 0) {
-      messages.push({
-        message: response,
-        sender: Sender.Left,
-      });
     }
-
-    return messages;
+    else{
+      console.error('no json found in response:', response);
+    }
   };
 
-  const handleUserMessage = async (userMessage) => {
+  const handleOllamaBotResponses = (response: any): ChatMessage => {
+    const content = extractJsonFromResponse(response)
+    return {
+      message: '',
+      sender: Sender.Left,
+      isGraphic: true,
+      graphicData: content?.table,
+    }
+  };
+
+  const handleUserMessage = async (userEntered) => {
+
+    let tempDiv = document.createElement('div');
+    tempDiv.innerHTML = userEntered;
+    const userMessage = tempDiv.textContent || tempDiv.innerText || '';
+
     console.log(userMessage);
     const newUserMessage = {
       message: userMessage,
@@ -116,40 +109,33 @@ const Homepage = () => {
 
     setIfBotTyping(true);
     try {
-      const aiResponse = await fetchOLlamaAIResponse(userMessage);
-      console.log(aiResponse);
-      const botMessages = handleMultipleBotResponses(aiResponse?.data.response);
+      const pandasResponse = await fetchPandasAIResponse(userMessage);
+      console.log(pandasResponse);
+      const botMessage = pandasResponse?.data.result
       setChatMessages((prevChatMessages) => [
         ...prevChatMessages,
-        ...botMessages,
+        {
+          message: botMessage,
+          sender: Sender.Left,
+        },
       ]);
       setIfBotTyping(false);
+
+      setIfBotTyping(true);
+      const ollamaResponse = await fetchOLlamaAIResponse(userMessage, botMessage);
+      console.log(ollamaResponse);
+      setChatMessages((prevChatMessages) => [
+        ...prevChatMessages,
+        handleOllamaBotResponses(ollamaResponse?.data.response),
+      ]);
+      setIfBotTyping(false);
+
     } catch (e) {
       console.log(e);
       setIfBotTyping(false);
     }
   };
 
-  //   const data = {
-  //     labels: ['Dallas Meeting Room', 'Buffalo Meeting Room', 'Paris Executive'],
-  //     datasets: [
-  //       {
-  //         label: 'Example Chart Display',
-  //         data: [3, 2, 3],
-  //         backgroundColor: [
-  //           'rgba(255, 99, 132, 0.8)',
-  //           'rgba(255, 159, 64, 0.8)',
-  //           'rgba(75, 192, 192, 0.8)',
-  //         ],
-  //         borderColor: [
-  //           'rgb(255, 99, 132)',
-  //           'rgb(255, 159, 64)',
-  //           'rgb(75, 192, 192)',
-  //         ],
-  //         borderWidth: 1,
-  //       },
-  //     ],
-  //   };
   return (
     <>
       {/* A container for the chat window */}
@@ -169,17 +155,6 @@ const Homepage = () => {
           <ChatContainer>
             {/* Shows all our messages */}
             <MessageList>
-              {/* <Message
-                model={{
-                  message: '',
-                  direction: 'outgoing',
-                  position: 'single',
-                }}
-              >
-                <Message.CustomContent>
-                  <Bar data={data} />
-                </Message.CustomContent>
-              </Message> */}
               {chatMessages.map((message, i) => {
                 if (message.isGraphic && message.graphicData) {
                   return (

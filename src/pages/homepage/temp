@@ -1,0 +1,20 @@
+{
+  "table": {
+    "labels": ["Total Calls", "Bad Calls"],
+    "datasets": [
+      {
+        "label": "",
+        "data": [200, 38],
+        "backgroundColor": [
+          "rgba(75, 192, 192, 0.8)",
+          "rgba(255, 99, 132, 0.8)"
+        ],
+        "borderColor": [
+          "rgb(75, 192, 192)",
+          "rgb(255, 99, 132)"
+        ],
+        "borderWidth": 1
+      }
+    ]
+  }
+}
